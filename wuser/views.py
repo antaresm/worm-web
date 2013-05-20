@@ -3,6 +3,7 @@ from django.http import HttpResponse
 import json, datetime
 from models import WUser
 from django.contrib.auth.models import User
+from django.contrib import auth
 
 
 def registration(data):
@@ -19,7 +20,7 @@ def registration(data):
         except WUser.DoesNotExist:
             user = WUser()
             user.username = j_data["name"]
-            user.password = j_data["password"]
+            user.set_password(j_data["password"])
             user.email = j_data["email"]
             user.avatar = j_data["avatar"]
             user.token = User.objects.make_random_password()
@@ -32,7 +33,6 @@ def registration(data):
             result = dict()
             result['code'] = 200
             result['data'] = result_data
-
             return json.dumps(result)
     else:
         result = dict()
@@ -41,30 +41,42 @@ def registration(data):
         return json.dumps(result)
 
 
-def login(request):
-    return ""
+def login(username, password):
+    user = auth.authenticate(username=username, password=password)
+    if user is not None and user.is_active:
+        wuser = WUser.objects.get(user_ptr_id=user.id)
+        wuser.token = User.objects.make_random_password()
+        wuser.token_time = datetime.datetime.now()
+        wuser.save()
+
+        result_data = dict()
+        result_data['id'] = wuser.id
+        result_data['token'] = wuser.token
+        result = dict()
+        result['code'] = 200
+        result['data'] = result_data
+        return json.dumps(result)
+    else:
+        result = dict()
+        result['code'] = 401
+        result['message'] = 'Incorrect data or password'
+        return json.dumps(result)
 
 
 # Метод основной обработки запросов
 # Тут мы проверяем что мы должны сделать и куда перенаправить обработку
-def main(request, id=0):
+def main(request):
     # Если это метод POST - это однозначно создание новой записи
     if 'POST' == request.method:
         return HttpResponse(registration(request.body))
 
     # Если это метод GET
     elif 'GET' == request.method:
-        # Если нам передан id сущности значит надо ее получить
-        if id > 0:
-            return ""#HttpResponse(read(name, id))
-
-        # Иначе нам надо сделать выборку нескольких сущностей
-        else:
-            if 'where' in request.GET:
-                wparams = request.GET['where']
-            else:
-                wparams = ''
-            return ""#HttpResponse(select(name, wparams))
+        # Если нам передан id и экшн login
+        username = request.GET["username"]
+        password = request.GET["password"]
+        if username != "" and password != "":
+            return HttpResponse(login(username, password))
 
     # Либо возвращает что метод запроса не верный
     return HttpResponse('Incorrect method')
