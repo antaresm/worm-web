@@ -8,8 +8,9 @@ from django.contrib.auth.models import User
 def registration(data):
     if data:
         j_data = json.loads(data)
+        username = j_data["name"]
         try:
-            WUser.objects.get(username=j_data["username"])
+            WUser.objects.get(username=username)
             result = dict()
             result['code'] = 401
             result['message'] = 'Username already exist'
