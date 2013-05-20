@@ -21,4 +21,7 @@ urlpatterns = patterns('',
     url(r'worm/v1/wobjects/(?P<name>[A-Za-z0-9_-]+)/(?P<id>[0-9]+)$', 'wobject.views.main'),
     url(r'worm/v1/wobjects/(?P<name>[A-Za-z0-9_-]+)?where=(?P<where>[A-Za-z0-9_-]+)$', 'wobject.views.main'),
 
+    url(r'worm/v1/wusers/$', 'wuser.views.main'),
+    url(r'worm/v1/wusers/(?P<id>[0-9]+)$', 'wuser.views.main'),
+
 )
