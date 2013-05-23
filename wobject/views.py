@@ -60,7 +60,9 @@ def create(name, data):
         sql = sql + ') VALUES ('
 
         for fieldName in j_data:
-            sql += '"' + str(j_data[fieldName]) + '",'
+            value = j_data[fieldName]
+            value = unicode(value)
+            sql += '"' + value + '",'
         sql = sql[:-1]
         sql = sql + ')'
 
@@ -118,7 +120,7 @@ def update(name, id, data):
     j_data = json.loads(data)
     sql = 'UPDATE ' + name + ' SET '
     for fName in j_data:
-        sql += fName + ' = "' + str(j_data[fName]) + '",'
+        sql += fName + ' = "' + j_data[fName] + '",'
     sql = sql[:-1]
     sql += ' WHERE id = ' + str(id)
     db = get_db()

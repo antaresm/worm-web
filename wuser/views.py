@@ -1,11 +1,13 @@
 # -*- coding: utf-8
-from django.http import HttpResponse
 import json
 import datetime
+
+from django.http import HttpResponse
 from django.core import serializers
-from models import WUser
 from django.contrib.auth.models import User
 from django.contrib import auth
+
+from wuser.models import WUser
 
 
 def registration(data):
