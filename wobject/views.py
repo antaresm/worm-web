@@ -9,8 +9,8 @@ def empty(request):
 
 
 def password():
-    #return "u97jcbj6Gkgcg3H"
-    return ""
+    return "u97jcbj6Gkgcg3H"
+    #return ""
 
 
 def get_db():
