@@ -1,49 +1,11 @@
 # -*- coding: utf-8
 from django.http import HttpResponse
 import json
-import MySQLdb
+from utils.utils import *
 
 
 def empty(request):
     return HttpResponse('Hello WORM!')
-
-
-def password():
-    return "u97jcbj6Gkgcg3H"
-    #return ""
-
-
-def get_db():
-    return MySQLdb.connect(host="localhost", user="root", passwd=password(), db="worm", charset='utf8')
-
-
-def get_table_schema(table_name):
-    db = get_db()
-    cursor = db.cursor()
-    cursor.execute("describe " + table_name)
-    result = cursor.fetchall()
-    db.close()
-    return result
-
-
-def dbdata_tojson(t_name, db_data, allData=True):
-    result_data = []
-    result_row = dict()
-    schema = get_table_schema(t_name)
-    field_num = 0
-    for row in db_data:
-        for value in row:
-            if value.__class__.__name__ == 'datetime':
-                value = str(value)
-            field_name = schema[field_num][0]
-            field_num += 1
-            result_row[field_name] = value
-        if not allData:
-            return result_row
-        else:
-            result_data.append(result_row)
-            field_num = 0
-    return result_data
 
 
 def create(name, data):
@@ -54,17 +16,13 @@ def create(name, data):
         for fName in j_data:
             if fName != u'id' and fName != u'lastUpdate':
                 sql += fName + ','
-        sql = sql[:-1]
-
-
-        sql = sql + ') VALUES ('
+        sql = sql[:-1] + ') VALUES ('
 
         for fieldName in j_data:
             value = j_data[fieldName]
             value = unicode(value)
             sql += '"' + value + '",'
-        sql = sql[:-1]
-        sql = sql + ')'
+        sql = sql[:-1] + ')'
 
         db = get_db()
         cursor = db.cursor()
@@ -121,8 +79,7 @@ def update(name, id, data):
     sql = 'UPDATE ' + name + ' SET '
     for fName in j_data:
         sql += fName + ' = "' + j_data[fName] + '",'
-    sql = sql[:-1]
-    sql += ' WHERE id = ' + str(id)
+    sql = sql[:-1] + ' WHERE id = ' + str(id)
     db = get_db()
     cursor = db.cursor()
     cursor.execute(sql)

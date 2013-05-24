@@ -3,41 +3,98 @@ import json
 import datetime
 
 from django.http import HttpResponse
-from django.core import serializers
+from utils.utils import *
 from django.contrib.auth.models import User
-from django.contrib import auth
 
-from wuser.models import WUser
+
+def update_token(id):
+    token = User.objects.make_random_password()
+    sql = 'UPDATE wusers SET token = "' + token + '" WHERE id = ' + str(id)
+    db = get_db()
+    cursor = db.cursor()
+    cursor.execute(sql)
+    db.commit()
+    db.close()
+    return token
+
+
+def exist_user(login, password):
+    sql = 'SELECT id as id, password as pwd FROM wusers WHERE login like "' + login + '"'
+    db = get_db()
+    cursor = db.cursor()
+    cursor.execute(sql)
+    data = cursor.fetchall()
+    db.close()
+    if len(data) == 0:
+        return 0
+    else:
+        if data[0][1] == password or password == '':
+            return data[0][0]
+        else:
+            return -1
+
+
+def exist_user_id(id):
+    sql = 'SELECT count(id) as count FROM wusers WHERE id = ' + str(id)
+    db = get_db()
+    cursor = db.cursor()
+    cursor.execute(sql)
+    data = cursor.fetchall()
+    db.close()
+    return data[0][0] > 0
+
+
+def user_token(id):
+    sql = 'SELECT token as count FROM wusers WHERE id = ' + str(id)
+    db = get_db()
+    cursor = db.cursor()
+    cursor.execute(sql)
+    data = cursor.fetchall()
+    db.close()
+    return data[0][0]
+
+
+def check_token(id, token):
+    sql = 'SELECT token FROM wusers WHERE id = ' + str(id)
+    db = get_db()
+    cursor = db.cursor()
+    cursor.execute(sql)
+    data = cursor.fetchall()
+    db.close()
+    return data['token'] == token
 
 
 def registration(data):
     if data:
         j_data = json.loads(data)
-        username = j_data["name"]
-        try:
-            WUser.objects.get(username=username)
-            result = dict()
-            result['code'] = 401
-            result['message'] = 'Username already exist'
-            return json.dumps(result)
+        sql = 'INSERT INTO wusers ('
 
-        except WUser.DoesNotExist:
-            user = WUser()
-            user.username = j_data["name"]
-            user.set_password(j_data["password"])
-            user.email = j_data["email"]
-            user.avatar = j_data["avatar"]
-            user.token = User.objects.make_random_password()
-            user.token_time = datetime.datetime.now()
-            user.save()
+        for fName in j_data:
+            if fName != u'id' and fName != u'lastUpdate':
+                sql += fName + ','
+        sql = sql[:-1] + ') VALUES ('
 
-            result_data = dict()
-            result_data['id'] = user.id
-            result_data['token'] = user.token
-            result = dict()
-            result['code'] = 200
-            result['data'] = result_data
-            return json.dumps(result)
+        for fieldName in j_data:
+            value = j_data[fieldName]
+            value = unicode(value)
+            sql += '"' + value + '",'
+        sql = sql[:-1] + ')'
+
+        db = get_db()
+        cursor = db.cursor()
+        cursor.execute(sql)
+        db.commit()
+        db.close()
+
+        result_data = dict()
+        result_data['id'] = cursor.lastrowid
+
+        result = dict()
+        # All ok )
+        result['code'] = 200
+        result['data'] = result_data
+
+        return json.dumps(result)
     else:
         result = dict()
         result['code'] = 401
@@ -45,17 +102,13 @@ def registration(data):
         return json.dumps(result)
 
 
-def login(username, password):
-    user = auth.authenticate(username=username, password=password)
-    if user is not None and user.is_active:
-        wuser = WUser.objects.get(user_ptr_id=user.id)
-        wuser.token = User.objects.make_random_password()
-        wuser.token_time = datetime.datetime.now()
-        wuser.save()
-
+def login(login, password):
+    id = exist_user(login, password)
+    if id > 0:
+        token = update_token(id)
         result_data = dict()
-        result_data['id'] = wuser.id
-        result_data['token'] = wuser.token
+        result_data['id'] = id
+        result_data['token'] = token
         result = dict()
         result['code'] = 200
         result['data'] = result_data
@@ -68,38 +121,48 @@ def login(username, password):
 
 
 def user_data(id, token):
-    try:
-        wu = WUser.objects.get(id=id)
-        if wu.token == token:
+    if exist_user_id(id) > 0:
+        if user_token(id) == token:
+            db = get_db()
+            cursor = db.cursor()
+            sql = 'SELECT * FROM wusers'
+            cursor.execute(sql)
+            data = cursor.fetchall()
+            result_data = dbdata_tojson('wusers', data)
+            db.close()
+
             result = dict()
             result['code'] = 200
-            result['data'] = serializers.serialize('json', [wu])
+            result['data'] = result_data
+
             return json.dumps(result)
         else:
             result = dict()
             result['code'] = 401
             result['message'] = 'Incorrect token'
             return json.dumps(result)
-    except WUser.DoesNotExist:
+    else:
         result = dict()
         result['code'] = 401
-        result['message'] = 'User not founded'
+        result['message'] = 'User not found'
         return json.dumps(result)
 
 
 def update(id, token, data):
-    try:
-        wu = WUser.objects.get(id=id)
-        if wu.token == token:
+    if exist_user_id(id):
+        if user_token(id) == token:
             j_data = json.loads(data)
 
-            if 'email' in j_data:
-                wu.email = j_data['email']
-            if 'password' in j_data:
-                wu.set_password(j_data['password'])
-            if 'avatar' in j_data:
-                wu.avatar = j_data['avatar']
-            wu.save()
+            sql = 'UPDATE wusers SET '
+            for fName in j_data:
+                if fName != 'login':
+                    sql += fName + ' = "' + j_data[fName] + '",'
+            sql = sql[:-1] + ' WHERE id = ' + str(id)
+            db = get_db()
+            cursor = db.cursor()
+            cursor.execute(sql)
+            db.commit()
+            db.close()
 
             result = dict()
             result['code'] = 200
@@ -109,10 +172,10 @@ def update(id, token, data):
             result['code'] = 401
             result['message'] = 'Incorrect token'
             return json.dumps(result)
-    except WUser.DoesNotExist:
+    else:
         result = dict()
         result['code'] = 401
-        result['message'] = 'User not founded'
+        result['message'] = 'User not found'
         return json.dumps(result)
 
 
