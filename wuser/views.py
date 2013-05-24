@@ -89,6 +89,9 @@ def registration(data):
         result_data = dict()
         result_data['id'] = cursor.lastrowid
 
+        token = update_token(cursor.lastrowid)
+        result_data['token'] = token
+
         result = dict()
         # All ok )
         result['code'] = 200
