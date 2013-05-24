@@ -189,14 +189,14 @@ def main(request, id=0, token=""):
     # Если это метод GET
     elif 'GET' == request.method:
         # Если нам передан id и экшн login
-        login = ""
-        password = ""
+        lgn = ""
+        passwd = ""
         if "login" in request.GET:
-            login = request.GET["login"]
+            lgn = request.GET["login"]
         if "password" in request.GET:
-            password = request.GET["password"]
-        if login != "" and password != "":
-            return HttpResponse(login(login, password))
+            passwd = request.GET["password"]
+        if lgn != "" and passwd != "":
+            return HttpResponse(login(lgn, passwd))
         elif id > 0 and token != "":
             return HttpResponse(user_data(id, token))
     elif 'PUT' == request.method:
