@@ -1,6 +1,7 @@
 # -*- coding: utf-8
 from django.http import HttpResponse
 import json
+from utils.db_utils import *
 from utils.utils import *
 
 
@@ -91,16 +92,32 @@ def update(name, id, data):
     return json.dumps(result)
 
 
-def select(name, params=''):
+def get_raw_data(name, param):
     db = get_db()
     cursor = db.cursor()
     sql = 'SELECT * FROM ' + name
-    if params != '':
-        sql += ' WHERE ' + params
+
+    if param != '':
+        sql += ' WHERE ' + param
+
     cursor.execute(sql)
     data = cursor.fetchall()
-    result_data = dbdata_tojson(name, data)
     db.close()
+    return dbdata_tojson(name, data)
+
+
+def select(name, param='', rel=''):
+    result_data = get_raw_data(name, param)
+
+    if rel != '':
+        for row in result_data:
+            for f in row:
+                tmpF = 'id' + rel
+                if f.upper() == tmpF.upper():
+                    idValue = row[f]
+                    rel_param = 'id=' + str(idValue)
+                    row[f] = get_raw_data(rel, rel_param)[0]
+                    break
 
     result = dict()
     result['code'] = 200
@@ -123,11 +140,9 @@ def main(request, name='', id=0):
 
         # Иначе нам надо сделать выборку нескольких сущностей
         else:
-            if 'where' in request.GET:
-                wparams = request.GET['where']
-            else:
-                wparams = ''
-            return HttpResponse(select(name, wparams))
+            w_param = get_param(request, 'where')
+            r_param = get_param(request, 'rel')
+            return HttpResponse(select(name, w_param, r_param))
 
     # Если это метод PUT значит надо обновить сущность
     elif 'PUT' == request.method:

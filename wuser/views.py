@@ -3,7 +3,7 @@ import json
 import datetime
 
 from django.http import HttpResponse
-from utils.utils import *
+from utils.db_utils import *
 from django.contrib.auth.models import User
 
 
