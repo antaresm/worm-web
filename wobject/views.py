@@ -92,6 +92,24 @@ def update(name, id, data):
     return json.dumps(result)
 
 
+def update_inc(name, id, data):
+    j_data = json.loads(data)
+    sql = 'UPDATE ' + name + ' SET '
+    for fName in j_data:
+        value = j_data[fName]
+        sql += fName + ' = ' + fName + '+' + str(value) + ','
+    sql = sql[:-1] + ' WHERE id = ' + str(id)
+    db = get_db()
+    cursor = db.cursor()
+    cursor.execute(sql)
+    db.commit()
+    db.close()
+
+    result = dict()
+    result['code'] = 200
+    return json.dumps(result)
+
+
 def get_raw_data(name, data):
     param = ''
     offset = None
@@ -183,4 +201,10 @@ def main(request, name='', id=0):
         return HttpResponse(delete(name, id))
 
     # Либо возвращает что метод запроса не верный
+    return HttpResponse('Incorrect method')
+
+
+def main_inc(request, name='', id=0):
+    if 'PUT' == request.method:
+        return HttpResponse(update_inc(name, id, request.body))
     return HttpResponse('Incorrect method')
