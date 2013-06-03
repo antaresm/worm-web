@@ -145,7 +145,7 @@ def select(name, data=''):
                     tmpF = 'id' + rel
                     if f.upper() == tmpF.upper():
                         idValue = row[f]
-                        rel_param = 'id=' + str(idValue)
+                        rel_param = '{"where": "id=' + str(idValue) + '"}'
                         row[rel] = get_raw_data(rel, rel_param)[0]
                         row[tmpF] = None
                         break
