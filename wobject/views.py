@@ -100,16 +100,14 @@ def get_raw_data(name, data):
 
     if data != '':
         j_data = json.loads(data)
-    if 'where' in j_data:
-        param = j_data['where']
-    if 'rel' in j_data:
-        rel = j_data['rel']
-    if 'offset' in j_data:
-        offset = j_data['offset']
-    if 'size' in j_data:
-        size = j_data['size']
-    if 'fields' in j_data:
-        fields = j_data['fields']
+        if 'where' in j_data:
+            param = j_data['where']
+        if 'offset' in j_data:
+            offset = j_data['offset']
+        if 'size' in j_data:
+            size = j_data['size']
+        if 'fields' in j_data:
+            fields = j_data['fields']
 
     db = get_db()
     cursor = db.cursor()
