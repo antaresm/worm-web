@@ -92,13 +92,42 @@ def update(name, id, data):
     return json.dumps(result)
 
 
-def get_raw_data(name, param):
+def get_raw_data(name, data):
+    param = ''
+    offset = None
+    size = None
+    fields = ''
+
+    if data != '':
+        j_data = json.loads(data)
+    if 'where' in j_data:
+        param = j_data['where']
+    if 'rel' in j_data:
+        rel = j_data['rel']
+    if 'offset' in j_data:
+        offset = j_data['offset']
+    if 'size' in j_data:
+        size = j_data['size']
+    if 'fields' in j_data:
+        fields = j_data['fields']
+
     db = get_db()
     cursor = db.cursor()
-    sql = 'SELECT * FROM ' + name
+    sql = 'SELECT '
+    if fields != '':
+        sql += fields
+    else:
+        sql += '*'
+    sql += ' FROM ' + name
 
     if param != '':
         sql += ' WHERE ' + param
+
+    if size:
+        sql += ' LIMIT '
+        if offset:
+            sql += offset + ','
+        sql += size
 
     cursor.execute(sql)
     data = cursor.fetchall()
@@ -106,18 +135,22 @@ def get_raw_data(name, param):
     return dbdata_tojson(name, data)
 
 
-def select(name, param='', rel=''):
-    result_data = get_raw_data(name, param)
+def select(name, data=''):
+    result_data = get_raw_data(name, data)
 
-    if rel != '':
-        for row in result_data:
-            for f in row:
-                tmpF = 'id' + rel
-                if f.upper() == tmpF.upper():
-                    idValue = row[f]
-                    rel_param = 'id=' + str(idValue)
-                    row[f] = get_raw_data(rel, rel_param)[0]
-                    break
+    if data != '':
+        j_data = json.loads(data)
+        if 'rel' in j_data:
+            rel = j_data['rel']
+            for row in result_data:
+                for f in row:
+                    tmpF = 'id' + rel
+                    if f.upper() == tmpF.upper():
+                        idValue = row[f]
+                        rel_param = 'id=' + str(idValue)
+                        row[rel] = get_raw_data(rel, rel_param)[0]
+                        row[tmpF] = None
+                        break
 
     result = dict()
     result['code'] = 200
@@ -141,8 +174,7 @@ def main(request, name='', id=0):
         # Иначе нам надо сделать выборку нескольких сущностей
         else:
             w_param = get_param(request, 'where')
-            r_param = get_param(request, 'rel')
-            return HttpResponse(select(name, w_param, r_param))
+            return HttpResponse(select(name, w_param))
 
     # Если это метод PUT значит надо обновить сущность
     elif 'PUT' == request.method:

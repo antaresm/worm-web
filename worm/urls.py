@@ -19,9 +19,7 @@ urlpatterns = patterns('',
 
     url(r'worm/v1/wobjects/(?P<name>[A-Za-z0-9_-]+)$', 'wobject.views.main'),
     url(r'worm/v1/wobjects/(?P<name>[A-Za-z0-9_-]+)/(?P<id>[0-9]+)$', 'wobject.views.main'),
-    url(r'worm/v1/wobjects/(?P<name>[A-Za-z0-9_-]+)?rel=(?P<rel>[A-Za-z0-9_-]+)$', 'wobject.views.main'),
     url(r'worm/v1/wobjects/(?P<name>[A-Za-z0-9_-]+)?where=(?P<where>[A-Za-z0-9_-]+)$', 'wobject.views.main'),
-    url(r'worm/v1/wobjects/(?P<name>[A-Za-z0-9_-]+)?rel=(?P<rel>[A-Za-z0-9_-]+)&where=(?P<where>[A-Za-z0-9_-]+)$', 'wobject.views.main'),
 
     url(r'worm/v1/wusers/$', 'wuser.views.main'),
     url(r'worm/v1/wusers?login=(?P<login>[A-Za-z0-9_-]+)&password=(?P<password>[A-Za-z0-9_-]+)$',
