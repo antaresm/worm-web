@@ -18,6 +18,19 @@ def update_token(id):
     return token
 
 
+def exist_user_login(login):
+    sql = 'SELECT id as id FROM wusers WHERE login like "' + login + '"'
+    db = get_db()
+    cursor = db.cursor()
+    cursor.execute(sql)
+    data = cursor.fetchall()
+    db.close()
+    if len(data) == 0:
+        return 0
+    else:
+        return data[0][0]
+
+
 def exist_user(login, password):
     sql = 'SELECT id as id, password as pwd FROM wusers WHERE login like "' + login + '"'
     db = get_db()
@@ -67,6 +80,15 @@ def check_token(id, token):
 def registration(data):
     if data:
         j_data = json.loads(data)
+
+        if 'login' in data:
+            login = data['login']
+            if exist_user_login(login) > 0:
+                result = dict()
+                result['code'] = 402
+                result['message'] = 'Login already exist'
+                return json.dumps(result)               
+
         sql = 'INSERT INTO wusers ('
 
         for fName in j_data:
