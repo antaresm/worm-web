@@ -115,6 +115,7 @@ def get_raw_data(name, data):
     offset = None
     size = None
     fields = ''
+    order_by = None
 
     if data != '':
         j_data = json.loads(data)
@@ -126,6 +127,8 @@ def get_raw_data(name, data):
             size = j_data['size']
         if 'fields' in j_data:
             fields = j_data['fields']
+        if 'order' in j_data:
+            order_by = j_data['order']
 
     db = get_db()
     cursor = db.cursor()
@@ -138,6 +141,10 @@ def get_raw_data(name, data):
 
     if param != '':
         sql += ' WHERE ' + param
+
+    if order_by:
+        sql += ' ORDER BY '
+        sql += order_by
 
     if size:
         sql += ' LIMIT '
