@@ -82,7 +82,7 @@ def registration(data):
         j_data = json.loads(data)
 
         if 'login' in data:
-            login = data['login']
+            login = j_data['login']
             if exist_user_login(login) > 0:
                 result = dict()
                 result['code'] = 402
